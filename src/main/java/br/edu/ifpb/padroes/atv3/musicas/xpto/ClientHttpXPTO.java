@@ -1,32 +1,54 @@
 package br.edu.ifpb.padroes.atv3.musicas.xpto;
 
-import br.edu.ifpb.padroes.atv3.musicas.abcd.Musica;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ClientHttpXPTO {
 
-    public static final String SERVICE_URI = "http://localhost:4000/musics";
+    private static final String ARQUIVO = "musicas-stream-xpto.json";
 
     public List<Song> findAll() {
         try {
-            HttpRequest songsRequest = HttpRequest.newBuilder(new URI(SERVICE_URI)).GET().build();
-            HttpClient httpClient = HttpClient.newHttpClient();
-            HttpResponse<String> response = httpClient.send(songsRequest, HttpResponse.BodyHandlers.ofString());
-
             ObjectMapper objectMapper = new ObjectMapper();
-            List<Song> songsRetrieved = objectMapper.readValue(response.body(), objectMapper.getTypeFactory().constructCollectionType(List.class, Musica.class));
-            return songsRetrieved;
-        } catch (URISyntaxException | IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            JsonNode rootNode = objectMapper.readTree(new File(ARQUIVO));
+
+            if (rootNode.isArray()) {
+                return objectMapper.readValue(
+                        new File(ARQUIVO),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Song.class)
+                );
+            }
+            else if (rootNode.has("songs")) {
+                return objectMapper.readValue(
+                        rootNode.get("songs").toString(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Song.class)
+                );
+            }
+
+            else if (rootNode.has("musics")) {
+                return objectMapper.readValue(
+                        rootNode.get("musics").toString(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Song.class)
+                );
+            }
+
+
+            else if (rootNode.has("musicas")) {
+                return objectMapper.readValue(
+                        rootNode.get("musicas").toString(),
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, Song.class)
+                );
+            }
+            else {
+                throw new RuntimeException("Formato JSON não reconhecido em " + ARQUIVO + ". Estrutura esperada: array direto ou objeto com campo 'songs'/'musicas'.");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler arquivo JSON: " + ARQUIVO, e);
         }
     }
-
 }

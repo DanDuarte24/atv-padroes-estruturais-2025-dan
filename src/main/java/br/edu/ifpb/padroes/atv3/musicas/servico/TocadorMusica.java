@@ -8,7 +8,6 @@ public class TocadorMusica {
         if (musica == null)
             throw new MusicaNaoEncontradaException();
 
-        System.out.println("Tocando musica: " + musica.titulo());
+        System.out.println("Tocando música: " + musica.titulo() + " — " + musica.artista());
     }
-
 }
